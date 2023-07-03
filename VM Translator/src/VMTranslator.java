@@ -302,6 +302,7 @@ public class VMTranslator {
         System.out.println(assemblyCode);
         return assemblyCode;
     }
+
 //    public static int HandleValue(String string1, String string2) {
 //        int y = Integer.parseInt(string2);
 //        switch (string1){
