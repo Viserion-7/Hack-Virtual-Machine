@@ -30,7 +30,7 @@ public class VMTranslator {
             myReader.close();
 
             BufferedWriter myWriter = new BufferedWriter(new FileWriter("out.asm"));
-            for ( String line : FileLines) {
+            for (String line : FileLines) {
                 String[] instr = line.split(" ");
                 String assemblyCode;
                 if (instr.length == 3) {
@@ -38,57 +38,51 @@ public class VMTranslator {
                         assemblyCode = HandlePush(instr[1], instr[2]);
                     } else if (instr[0].equals("pop")) {
                         assemblyCode = HandlePop(instr[1], instr[2]);
-                    }
-                    else {
+                    } else {
                         System.out.println("Error: Invalid instruction");
                         break;
                     }
                 } else if (Arrays.asList(arithmetic).contains(instr[0])) {
                     assemblyCode = HandleArithmetic(line);
+                } else if (instr[0].equals("label")) {
+                    assemblyCode = HandleLabel(instr[1]);
                 }
-                else if(instr[0].equals("label"))
+                else if(instr[0].equals("goto")){
+                    assemblyCode = HandleGoto(instr[1]);
+                }
+                else if(instr[0].equals("if-goto"))
                 {
-                    assemblyCode = "("+instr[1]+")\n";
+                    assemblyCode = HandleIfGoto(instr[1]);
                 }
-//                else if(instr[0].equals("goto")){
-//                    assemblyCode = "@{label}\n" + "0;JMP\n";
-//                    assemblyCode = assemblyCode.replace("{label}", instr[1]);
-//                }
-//                else if(instr[0].equals("if-goto"))
-//                {
-//                    assemblyCode = "@{label}\n";
-//                    assemblyCode = assemblyCode.replace("{label}", instr[1]);
-//                }
-
 //                else if(instr[0].equals("function")){
-//                    assemblyCode = "("+instr[1]+")\n";
+//                    assemblyCode = HandleFunction(instr[1], instr[2]);
 //                }
 //                else if(instr[0].equals("call")){
-//                    assemblyCode = "@"+instr[1]+"\n";
+//                    assemblyCode = HandleCall(instr[1], instr[2]);
 //                }
 //                else if(instr[0].equals("return")){
-//                    assemblyCode = "@"+instr[1]+"\n";
+//                    assemblyCode = HandleReturn();
 //                }
                 else {
                     System.out.println("Error: Invalid instruction");
                     break;
                 }
-                System.out.println(line);
                 System.out.println(assemblyCode);
                 myWriter.write(assemblyCode);
             }
             myWriter.close();
-            System.out.println("Translation completed successfully.");
+            System.out.print("Translation completed successfully.");
         } catch (FileNotFoundException e) {
             System.out.println("Error File not found: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("Error reading or writing the file: " + e.getMessage());
         }
     }
+
     public static String HandleArithmetic(String command) {
         switch (command) {
             case "add":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "D=M\n" +
@@ -99,7 +93,7 @@ public class VMTranslator {
                         "@SP\n" +
                         "M=M+1\n";
             case "sub":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "D=M\n" +
@@ -110,12 +104,12 @@ public class VMTranslator {
                         "@SP\n" +
                         "M=M+1\n";
             case "neg":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "M=-M\n";
             case "eq":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "D=M\n" +
@@ -129,7 +123,7 @@ public class VMTranslator {
                         "@SP\n" +
                         "M=M+1\n";
             case "gt":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "D=M\n" +
@@ -145,7 +139,7 @@ public class VMTranslator {
                         "@SP\n" +
                         "M=M-1\n";
             case "lt":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "D=M\n" +
@@ -161,7 +155,7 @@ public class VMTranslator {
                         "@SP\n" +
                         "M=M-1\n";
             case "and":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "D=M\n" +
@@ -170,7 +164,7 @@ public class VMTranslator {
                         "A=M\n" +
                         "M=D&M\n";
             case "or":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "D=M\n" +
@@ -179,7 +173,7 @@ public class VMTranslator {
                         "A=M\n" +
                         "M=D|M\n";
             case "not":
-                return  "@SP\n" +
+                return "@SP\n" +
                         "M=M-1\n" +
                         "A=M\n" +
                         "M=!M\n";
@@ -187,9 +181,9 @@ public class VMTranslator {
         return "";
     }
     public static String HandlePush(String MemorySegment, String index) {
-        switch (MemorySegment){
+        switch (MemorySegment) {
             case "constant":
-                return  "@{i}\n".replace("{i}",index) +
+                return "@{i}\n".replace("{i}", index) +
                         "D=A\n" +
                         "@SP\n" +
                         "A=M\n" +
@@ -197,7 +191,7 @@ public class VMTranslator {
                         "@SP\n" +
                         "M=M+1\n";
             case "temp":
-                return  "@{i}\n".replace("{i}",index) +
+                return "@{i}\n".replace("{i}", index) +
                         "D=A\n" +
                         "@5\n" +
                         "A=D+A\n" +
@@ -209,7 +203,7 @@ public class VMTranslator {
                         "M=M+1\n";
             case "static":
                 // file.index need to like that properly in the asm file
-                return  "@{i}\n".replace("{i}",index) +
+                return "@{i}\n".replace("{i}", index) +
                         "D=A\n" +
                         "@16\n" +
                         "A=D+A\n" +
@@ -220,7 +214,7 @@ public class VMTranslator {
                         "@SP\n" +
                         "M=M+1\n";
             case "pointer":
-                if (index.equals("0")){
+                if (index.equals("0")) {
                     return "@THIS\n" +
                             "D=M\n" +
                             "@SP\n" +
@@ -228,8 +222,8 @@ public class VMTranslator {
                             "M=D\n" +
                             "@SP\n" +
                             "M=M+1\n";
-                }else{
-                    return  "@THAT\n" +
+                } else {
+                    return "@THAT\n" +
                             "D=M\n" +
                             "@SP\n" +
                             "A=M\n" +
@@ -241,9 +235,9 @@ public class VMTranslator {
             case "argument":
             case "this":
             case "that":
-                return  "@{i}\n".replace("{i}",index) +
+                return "@{i}\n".replace("{i}", index) +
                         "D=A\n" +
-                        "@{segment}\n".replace("{segment}",MemorySegment) +
+                        "@{segment}\n".replace("{segment}", MemorySegment) +
                         "D=D+M\n" +
                         "@R13\n" +
                         "M=D\n" +
@@ -258,71 +252,84 @@ public class VMTranslator {
         return "";
     }
     public static String HandlePop(String MemorySegment, String index) {
-        String out;
-        switch (MemorySegment){
-            case "local":
-                out = "LCL";
-                break;
-            case "argument":
-                out = "ARG";
-                break;
-            case "this":
-                out = "THIS";
-                break;
-            case "that":
-                out = "THAT";
-                break;
+        switch (MemorySegment) {
             case "temp":
-                out = Integer.toString(5 + (Integer.parseInt(index)));
-                break;
-            case "pointer":
-                out = Integer.toString(3 + (Integer.parseInt(index)));
-                break;
+                return "@{i}\n".replace("{i}", "index") +
+                        "D=A\n" +
+                        "@5\n" +
+                        "D=D+A\n" +
+                        "@R13\n" +
+                        "M=D\n" +
+                        "@SP\n" +
+                        "M=M-1\n" +
+                        "A=M\n" +
+                        "D=M\n" +
+                        "@R13\n" +
+                        "A=M\n" +
+                        "M=D";
             case "static":
-                out = Integer.toString(16 + (Integer.parseInt(index)));
-                break;
-            default:
-                out = "";
-                break;
+                return "@i\n" +
+                        "D=A\n" +
+                        "@16\n" +
+                        "D=D+A\n" +
+                        "@R13\n" +
+                        "M=D\n" +
+                        "@SP\n" +
+                        "AM=M-1\n" +
+                        "D=M\n" +
+                        "@R13\n" +
+                        "A=M\n" +
+                        "M=D\n";
+            case "pointer":
+                if (index.equals("0")) {
+                    return "@SP\n" +
+                            "M=M-1\n" +
+                            "A=m\n" +
+                            "D=M\n" +
+                            "@THIS\n" +
+                            "M=D\n";
+                } else {
+                    return "@SP\n" +
+                            "M=M-1\n" +
+                            "A=M" +
+                            "D=M\n" +
+                            "@THAT\n" +
+                            "M=D\n";
+                }
+            case "local":
+            case "argument":
+            case "this":
+            case "that":
+                return "@{i}\n".replace("{i}", index) +
+                        "D=A\n" +
+                        "@{segment}\n".replace("{segment}", MemorySegment) +
+                        "D=D+M\n" +
+                        "@R13\n" +
+                        "M=D\n" +
+                        "@SP\n" +
+                        "M=M-1\n" +
+                        "A=M\n" +
+                        "D=M\n" +
+                        "@R13\n" +
+                        "A=M\n" +
+                        "M=D\n";
         }
-        String assemblyCode =
-                "@" + index + "\n" +
-                "D=A\n" +
-                "@"+out + "\n" +
-                "D=M+D\n" +
-                "@R13\n" +
-                "M=D\n" +
-                "@SP\n" +
+        return "";
+    }
+    public static String HandleLabel(String label) {
+        return  "(" + label + ")\n";
+    }
+    public static String HandleGoto(String label) {
+        return  "@{label}\n".replace("{label}",label) +
+                "0;JMP\n";
+    }
+    public static String HandleIfGoto(String label) {
+        return  "@SP\n" +
                 "M=M-1\n" +
                 "A=M\n" +
                 "D=M\n" +
-                "@R13\n" +
-                "A=M\n" +
-                "M=D\n";
-        System.out.println(assemblyCode);
-        return assemblyCode;
+                "@{label}\n".replace("{label}",label) +
+                "D;JNE\n";
     }
 
-//    public static int HandleValue(String string1, String string2) {
-//        int y = Integer.parseInt(string2);
-//        switch (string1){
-//            case "local":
-//                return 300 + y;
-//            case "argument":
-//                return 400 + y;
-//            case "this":
-//                return 3000 + y;
-//            case "that":
-//                return 3010 + y;
-//            case "temp":
-//                return 5 + y;
-//            case "pointer":
-//                return 800 + y;
-//            case "constant":
-//                return y;
-//            case "static":
-//                return 16 + y;
-//        }
-//        return 0;
-//    }
 }
